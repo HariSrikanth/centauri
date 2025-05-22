@@ -1,0 +1,106 @@
+[tool.poetry]
+name = "alpha-me"
+version = "0.1.0"
+description = "An invite-only platform for founders & investors with AI-generated newsletters and intelligent matchmaking"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [
+    { include = "apps" },
+    { include = "libs" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+pydantic = {extras = ["email"], version = "^2.6.0"}
+pydantic-settings = "^2.1.0"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.25"}
+asyncpg = "^0.29.0"
+alembic = "^1.13.1"
+celery = {extras = ["redis"], version = "^5.3.6"}
+redis = "^5.0.1"
+httpx = "^0.26.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
+google-auth = {extras = ["oauthlib"], version = "^2.27.0"}
+google-cloud-pubsub = "^2.18.4"
+google-cloud-storage = "^2.14.0"
+google-cloud-secret-manager = "^2.18.0"
+openai = "^1.12.0"
+tweepy = "^4.14.0"
+PyGithub = "^2.1.1"
+exa-py = "^0.6.0"
+hdbscan = "^0.8.33"
+scikit-learn = "^1.4.0"
+sentence-transformers = "^2.2.2"
+strawberry-graphql = "^0.219.0"
+python-dotenv = "^1.0.0"
+structlog = "^24.1.0"
+opentelemetry-api = "^1.22.0"
+opentelemetry-sdk = "^1.22.0"
+opentelemetry-instrumentation-fastapi = "^0.42b0"
+opentelemetry-instrumentation-celery = "^0.42b0"
+opentelemetry-exporter-otlp = "^1.22.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.5"
+pytest-cov = "^4.1.0"
+black = "^24.1.1"
+isort = "^5.13.2"
+mypy = "^1.8.0"
+ruff = "^0.2.1"
+pre-commit = "^3.6.0"
+faker = "^22.6.0"
+factory-boy = "^3.3.0"
+aioresponses = "^0.7.6"
+freezegun = "^1.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "B", "I", "N", "UP", "PL", "RUF"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=apps --cov=libs --cov-report=term-missing"
+filterwarnings = ["ignore::DeprecationWarning"] 
