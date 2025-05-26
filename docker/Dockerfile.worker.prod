@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.11-slim as builder
+FROM --platform=linux/amd64 python:3.11-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -12,64 +12,52 @@ ENV PYTHONUNBUFFERED=1 \
 # Add Poetry to PATH
 ENV PATH="$POETRY_HOME/bin:$PATH"
 
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        curl \
-        build-essential \
-        libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Install system dependencies (curl, build-essential, libpq-dev) and clean apt cache
+RUN apt-get update && apt-get install -y --no-install-recommends curl build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+# Install Poetry (using curl)
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Set working directory
 WORKDIR /app
 
-# Copy Poetry files
+# Copy pyproject.toml and poetry.lock (if any) into /app
 COPY pyproject.toml poetry.lock* ./
 
-# Install dependencies
-RUN poetry install --no-root --no-dev
+# Create a virtual environment (venv) at /opt/venv and install dependencies (using --only main) into it
+RUN python -m venv /opt/venv && . /opt/venv/bin/activate && poetry install --only main
 
-# Copy application code
+# Copy the rest of the application code (so that the venv is populated) and install the project (if needed)
 COPY . .
-
-# Install application
-RUN poetry install --no-dev
+# (If you need to install the project, uncomment the next line; otherwise, the venv already has the dependencies.)
+# RUN . /opt/venv/bin/activate && poetry install --only main
 
 # Production stage
-FROM python:3.11-slim
+FROM --platform=linux/amd64 python:3.11-slim
 
-# Set environment variables
+# Set environment variables (including PATH so that the venv's bin is used)
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH"
 
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+# Install system dependencies (only libpq5) and clean apt cache
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-
-# Copy virtual environment from builder
+# Copy the virtual environment (and the application code) from the builder stage
 COPY --from=builder /opt/venv /opt/venv
-
-# Copy application code
 COPY --from=builder /app /app
 
-# Set working directory
+# Set working directory (if needed)
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -m -u 1000 app \
-    && chown -R app:app /app
+# Create a non-root user (app) and chown /app (so that the app runs as non-root)
+RUN useradd -m -u 1000 app && chown -R app:app /app
 
-# Switch to non-root user
+# Switch to the non-root user
 USER app
 
-# Set default command
-CMD ["celery", "-A", "apps.worker.main", "worker", "--loglevel=info"] 
+# Expose port (Cloud Run requires a port to be exposed)
+EXPOSE 8080
+
+# Set the default command to run the worker with health server
+CMD ["python", "-m", "apps.workers.worker_with_health"] 

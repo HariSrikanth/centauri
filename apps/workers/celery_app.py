@@ -1,7 +1,9 @@
 from celery import Celery
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
+import structlog
 
 from apps.api.core.config import settings
+
+logger = structlog.get_logger()
 
 # Create Celery app
 celery_app = Celery(
@@ -41,9 +43,5 @@ celery_app.conf.update(
     },
 )
 
-# Add OpenTelemetry instrumentation
-if not settings.is_development:
-    CeleryInstrumentor().instrument()
-
 # Import tasks
-from apps.workers.tasks import *  # noqa: F403 
+from apps.workers.tasks import * 

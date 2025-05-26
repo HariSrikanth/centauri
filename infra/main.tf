@@ -144,6 +144,10 @@ resource "google_cloud_run_service" "api" {
       service_account_name = google_service_account.cloud_run.email
       containers {
         image = "gcr.io/${var.project_id}/alpha-me-api:latest"
+        ports {
+          container_port = 8080
+          name = "http1"
+        }
         resources {
           limits = {
             cpu    = "1000m"
@@ -182,6 +186,10 @@ resource "google_cloud_run_service" "worker" {
       service_account_name = google_service_account.cloud_run.email
       containers {
         image = "gcr.io/${var.project_id}/alpha-me-worker:latest"
+        ports {
+          container_port = 8080
+          name = "http1"
+        }
         resources {
           limits = {
             cpu    = "2000m"

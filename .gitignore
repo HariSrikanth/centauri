@@ -114,4 +114,8 @@ terraform.rc
 .env.local
 .env.development.local
 .env.test.local
-.env.production.local 
+.env.production.local
+
+# Secrets and environment variables
+secrets/
+.env 

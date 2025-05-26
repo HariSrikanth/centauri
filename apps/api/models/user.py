@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Table
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,14 +12,14 @@ from apps.api.core.database import Base
 user_integrations = Table(
     "user_integrations",
     Base.metadata,
-    mapped_column("user_id", PGUUID, ForeignKey("users.id"), primary_key=True),
-    mapped_column("provider", String, primary_key=True),
-    mapped_column("external_id", String, nullable=False),
-    mapped_column("access_token", String, nullable=False),
-    mapped_column("refresh_token", String),
-    mapped_column("expires_at", DateTime),
-    mapped_column("scopes", ARRAY(String)),
-    mapped_column("metadata", JSONB),
+    Column("user_id", PGUUID, ForeignKey("users.id"), primary_key=True),
+    Column("provider", String, primary_key=True),
+    Column("external_id", String, nullable=False),
+    Column("access_token", String, nullable=False),
+    Column("refresh_token", String),
+    Column("expires_at", DateTime),
+    Column("scopes", ARRAY(String)),
+    Column("metadata", JSONB),
 )
 
 class User(Base):

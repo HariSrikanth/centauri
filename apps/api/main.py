@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from structlog import get_logger
 
 from apps.api.core.config import settings
-from apps.api.core.logging import configure_logging
-from apps.api.routers import auth, context, deltas, match, newsletter, system
+from apps.api.core.logging import RequestIDMiddleware, configure_logging
+from apps.api.routers import auth, deltas, match, newsletter, system
 
 logger = get_logger()
 
@@ -31,13 +30,11 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Add OpenTelemetry instrumentation
-    if settings.ENVIRONMENT != "development":
-        FastAPIInstrumentor.instrument_app(app)
+    # Add request ID middleware
+    app.add_middleware(RequestIDMiddleware)
 
     # Include routers
     app.include_router(auth.router, prefix="/v1", tags=["auth"])
-    app.include_router(context.router, prefix="/v1", tags=["context"])
     app.include_router(deltas.router, prefix="/v1", tags=["deltas"])
     app.include_router(match.router, prefix="/v1/match", tags=["match"])
     app.include_router(newsletter.router, prefix="/v1", tags=["newsletter"])

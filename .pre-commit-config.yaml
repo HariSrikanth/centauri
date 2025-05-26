@@ -46,7 +46,7 @@ repos:
           - openai
           - tweepy
           - PyGithub
-          - exa-py
+          - exa_py
           - hdbscan
           - scikit-learn
           - sentence-transformers

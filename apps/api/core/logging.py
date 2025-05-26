@@ -1,10 +1,11 @@
 import logging
 import sys
+import uuid
 from typing import Any
 
 import structlog
-from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from apps.api.core.config import settings
 
@@ -48,27 +49,20 @@ def get_logger(name: str | None = None) -> structlog.BoundLogger:
     """Get a structured logger instance."""
     return structlog.get_logger(name)
 
-class OpenTelemetryProcessor:
-    """Structlog processor that adds OpenTelemetry trace context to log records."""
-
-    def __init__(self) -> None:
-        self.tracer = trace.get_tracer(__name__)
-
-    def __call__(self, logger: structlog.BoundLogger, method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
-        """Add trace context to the event dict."""
-        current_span = trace.get_current_span()
-        if current_span.is_recording():
-            event_dict["trace_id"] = format(current_span.get_span_context().trace_id, "032x")
-            event_dict["span_id"] = format(current_span.get_span_context().span_id, "016x")
-        return event_dict
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Middleware that adds a request ID to each request."""
+    
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(request_id=request_id)
+        
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
 def log_exception(logger: structlog.BoundLogger, exc: Exception, level: str = "error") -> None:
-    """Log an exception with trace context and status."""
-    current_span = trace.get_current_span()
-    if current_span.is_recording():
-        current_span.set_status(Status(StatusCode.ERROR, str(exc)))
-        current_span.record_exception(exc)
-
+    """Log an exception with context."""
     log_method = getattr(logger, level)
     log_method(
         "exception_occurred",
